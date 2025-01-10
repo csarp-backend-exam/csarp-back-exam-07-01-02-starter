@@ -14,7 +14,7 @@ namespace Kreta.Backend.Repos.SwitchTables
 
         public IQueryable<SchoolClassStudents> SelectAllIncluded()
         {
-            return FindAll().Include(schoolClassSubjects => schoolClassSubjects.SchoolClass)
+            return SelectAll().Include(schoolClassSubjects => schoolClassSubjects.SchoolClass)
                             .Include(SchoolClassSubjects => SchoolClassSubjects.Student);
         }
     }

@@ -6,6 +6,10 @@
         {
             Error = string.Empty;
         }
+        public ErrorStore(string error)
+        {
+            Error = error;
+        }
 
         public string Error { get; set; } = string.Empty;
         public bool HasError => !string.IsNullOrEmpty(Error);

@@ -15,15 +15,16 @@ namespace Kreta.Backend.Repos.SwitchTables
 
         public IQueryable<SchoolClassSubjects> SelectAllIncluded()
         {
-            return FindAll().Include(schoolClassSubjects => schoolClassSubjects.Subject)
+            return SelectAll().Include(schoolClassSubjects => schoolClassSubjects.Subject)
                             .Include(SchoolClassSubjects => SchoolClassSubjects.SchoolClass);
         }
 
 
-        public async Task<ControllerResponse> MoveToNotStudyingSchoolClassSubjectAsync(SchoolClassSubjects schoolClassSubjectToChange)
+        public async Task<Response> MoveToNotStudyingSchoolClassSubjectAsync(SchoolClassSubjects schoolClassSubjectToChange)
         {
             SchoolClassSubjects? schoolClassSubjectToMove =
-                FindByCondition(schoolClassSubjects =>
+                SelectAll()
+                .FindByCondition(schoolClassSubjects =>
                         schoolClassSubjects.SchoolClassId == schoolClassSubjectToChange.SchoolClassId &&
                         schoolClassSubjects.SubjectId == schoolClassSubjectToChange.SubjectId)
                 .FirstOrDefault();
@@ -31,10 +32,10 @@ namespace Kreta.Backend.Repos.SwitchTables
             {
                 return await DeleteAsync(schoolClassSubjectToMove.Id);
             }
-            return new ControllerResponse("A törlés nem lehetséges!");
+            return new Response("A törlés nem lehetséges!");
         }
 
-        public async Task<ControllerResponse> MoveToStudyingSchoolClassSubjectAsync(SchoolClassSubjects schoolClassSubjectToChange)
+        public async Task<Response> MoveToStudyingSchoolClassSubjectAsync(SchoolClassSubjects schoolClassSubjectToChange)
         {
             SchoolClassSubjects newSchoolClassSubjects = new SchoolClassSubjects
             {

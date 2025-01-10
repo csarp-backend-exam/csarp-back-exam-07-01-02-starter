@@ -1,15 +1,17 @@
-﻿using Kreta.Shared.Responses;
+﻿using Kreta.Shared.Models;
+using Kreta.Shared.Responses;
 using System.Linq.Expressions;
 
 namespace Kreta.Backend.Repos.Base
 {
-    public interface IBaseRepo<T>
+    public interface IBaseRepo<TEntity> where TEntity : class, IDbEntity<TEntity>, new()
     {
-        IQueryable<T> GetEmpty();
-        IQueryable<T> FindAll();
-        IQueryable<T> FindByCondition(Expression<Func<T, bool>> expression);
-        Task<ControllerResponse> CreateAsync(T entity);
-        Task<ControllerResponse> UpdateAsync(T entity);
-        Task<ControllerResponse> DeleteAsync(Guid id);
+        IQueryable<TEntity> GetEmpty();
+        IQueryable<TEntity> FindAll();
+        Task<IEnumerable<TEntity>> GetAllAsync();
+        Task<IEnumerable<TEntity>> FindByConditionAsync(Expression<Func<TEntity, bool>> expression);
+        Task<Response> UpdateAsync(TEntity entity);
+        Task<Response> CreateAsync(TEntity entity);
+        Task<Response> DeleteAsync(Guid id);
     }
 }

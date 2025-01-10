@@ -41,7 +41,7 @@ namespace Kreta.Backend.Controllers
         [HttpPost("MoveToNotStudying")]
         public async Task<ActionResult> MoveToNotStudyingAsync(SchoolClassSubjectsDto schoolClassSubjectsDto)
         {
-            ControllerResponse response = new();
+            Response response = new();
             if (schoolClassSubjectRepo is not null)
             {
                 response = await schoolClassSubjectRepo.MoveToNotStudyingSchoolClassSubjectAsync(schoolClassSubjectsDto.ToModel());
@@ -58,7 +58,7 @@ namespace Kreta.Backend.Controllers
         [HttpPost("MoveToStudying")]
         public async Task<ActionResult> MoveToStudyingAsync(SchoolClassSubjectsDto schoolClassSubjectsDto)
         {
-            ControllerResponse response = new();
+            Response response = new();
             if (schoolClassSubjectRepo is not null)
             {
                 response = await schoolClassSubjectRepo.MoveToStudyingSchoolClassSubjectAsync(schoolClassSubjectsDto.ToModel());

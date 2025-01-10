@@ -1,45 +1,32 @@
-﻿using Kreta.Shared.Models;
+﻿using Kreta.Backend.Repos.Base;
+using Kreta.Shared.Models;
 using Kreta.Shared.Responses;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace Kreta.Backend.Repos.Base
 {
-    public abstract class BaseRepo<TDbContext, TEntity> : IBaseRepo<TEntity>
+    public class BaseRepo<TDbContext, TEntity> : IBaseRepo<TEntity>
         where TDbContext : DbContext
         where TEntity : class, IDbEntity<TEntity>, new()
     {
         private readonly DbContext? _dbContext;
-        private readonly DbSet<TEntity>? _dbSet;
+        protected readonly DbSet<TEntity>? _dbSet;
 
         public BaseRepo(TDbContext? dbContext)
         {
+            ArgumentNullException.ThrowIfNull(dbContext, $"A {nameof(TEntity)} adatbázis tábla nem elérhető!");
             _dbContext = dbContext;
-            _dbSet = _dbContext?.Set<TEntity>() ?? throw new ArgumentException($"A {nameof(TEntity)} adatbázis tábla nem elérhető!");
+            _dbSet = _dbContext.Set<TEntity>() ?? throw new ArgumentException($"A {nameof(TEntity)} adatbázis tábla nem elérhető!");
         }
-        public IQueryable<TEntity> GetEmpty()
+
+        public IQueryable<TEntity> GetEmpty() => _dbSet!.Take(0);        
+        public IQueryable<TEntity> FindAll() => _dbSet!;
+        public async Task<IEnumerable<TEntity>> FindByConditionAsync(Expression<Func<TEntity, bool>> expression) => await _dbSet!.Where(expression).ToListAsync();
+        public async Task<IEnumerable<TEntity>> GetAllAsync() => await _dbSet!.ToListAsync();
+        public async Task<Response> UpdateAsync(TEntity entity)
         {
-            return _dbSet?.Take(0) ?? throw new ArgumentException($"A {nameof(TEntity)} adatbázis tábla nem elérhető!");
-        }
-        public IQueryable<TEntity> FindAll()
-        {
-            if (_dbSet is null)
-            {
-                return Enumerable.Empty<TEntity>().AsQueryable().AsNoTracking();
-            }
-            return _dbSet.AsNoTracking();
-        }
-        public IQueryable<TEntity> FindByCondition(Expression<Func<TEntity, bool>> expression)
-        {
-            if (_dbSet is null)
-            {
-                return Enumerable.Empty<TEntity>().AsQueryable().AsNoTracking();
-            }
-            return _dbSet.Where(expression).AsNoTracking();
-        }
-        public async Task<ControllerResponse> UpdateAsync(TEntity entity)
-        {
-            ControllerResponse response = new();
+            Response response = new();
             try
             {
                 if (_dbContext is not null)
@@ -47,40 +34,46 @@ namespace Kreta.Backend.Repos.Base
                     _dbContext.ChangeTracker.Clear();
                     _dbContext.Entry(entity).State = EntityState.Modified;
                     await _dbContext.SaveChangesAsync();
-                    response.Id = entity.Id;
                     return response;
                 }
             }
             catch (Exception e)
             {
-                response.AppendNewError(e.Message);
+                return HandleException(nameof(UpdateAsync), e, $"{entity} frissítése nem sikerült!");
             }
-            response.AppendNewError($"{nameof(BaseRepo<TDbContext, TEntity>)} osztály, {nameof(UpdateAsync)} metódusban hiba keletkezett");
-            response.AppendNewError($"{entity} frissítése nem sikerült!");
             return response;
         }
-        public async Task<ControllerResponse> DeleteAsync(Guid id)
+
+        public async Task<Response> CreateAsync(TEntity entity)
         {
-            ControllerResponse response = new();
-
-            TEntity? entityToDelete = FindByCondition(e => e.Id == id).FirstOrDefault();
-
-            if (entityToDelete is null || entityToDelete is not null && !entityToDelete.HasId)
+            try
             {
-                if (entityToDelete is not null)
-                    response.AppendNewError($"{entityToDelete.Id} idével rendelkező entitás nem található!");
-                response.AppendNewError("Az entitás törlése nem sikerült!");
+                _dbSet!.Add(entity);
+                await _dbContext!.SaveChangesAsync();
+                return new Response();
             }
+            catch (Exception e)
+            {
+                return HandleException(nameof(CreateAsync), e, $"{entity} hozzáadása az adatbázishoz nem sikerült!");
+            }
+        }
+
+        public async Task<Response> DeleteAsync(Guid id)
+        {
+            Response response = new();
+            TEntity? entityToDelete = _dbSet!.Where(e => e.Id == id).FirstOrDefault();
+
+            if (entityToDelete is null)
+                response = HandleException(nameof(DeleteAsync), null, $"A törlendő entitás nem található!");
             else
             {
                 try
                 {
-                    if (entityToDelete is not null && _dbContext is not null)
+                    if (_dbContext is not null)
                     {
                         _dbContext.ChangeTracker.Clear();
-                        _dbContext.Entry(entityToDelete).State = EntityState.Deleted;
+                        _dbContext.Entry(entityToDelete!).State = EntityState.Deleted;
                         await _dbContext.SaveChangesAsync();
-                        response.Id = entityToDelete.Id;
                         return response;
                     }
                 }
@@ -95,35 +88,21 @@ namespace Kreta.Backend.Repos.Base
             response.AppendNewError($"Az entitás törlése nem sikerült!");
             return response;
         }
-        public async Task<ControllerResponse> CreateAsync(TEntity entity)
+
+        protected IQueryable<TEntity> SelectAll()
         {
-            ControllerResponse response = new();
-            if (_dbSet is null)
-            {
-                response.AppendNewError($"{entity} osztály hozzáadása az adatbázishoz nem sikerült!");
-            }
-            else
-            {
-                try
-                {
-                    if (_dbContext is not null)
-                    {
-                        _dbSet.Add(entity);
-                        await _dbContext.SaveChangesAsync();
-                        response.Id = entity.Id;
-                        return response;
-                    }
-                }
-                catch (Exception e)
-                {
-                    response.AppendNewError(e.Message);
-                }
-            }
-            response.AppendNewError($"{nameof(BaseRepo<TDbContext, TEntity>)} osztály, {nameof(CreateAsync)} metódusban hiba keletkezett");
-            response.AppendNewError($"{entity} osztály hozzáadása az adatbázishoz nem sikerült!");
+            return _dbSet!;
+        }
+        private static Response HandleException(string methodName, Exception? exception, string additionalMessage = "")
+        {
+            Response response = new();
+            if (!string.IsNullOrEmpty(methodName))
+                response.AppendNewError($"{methodName} metódusban hiba történt.");
+            if (exception is not null)
+                response.AppendNewError(exception.Message);
+            if (!string.IsNullOrWhiteSpace(additionalMessage))
+                response.AppendNewError(additionalMessage);
             return response;
         }
-
-
     }
 }

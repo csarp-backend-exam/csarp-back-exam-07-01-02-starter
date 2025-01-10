@@ -39,7 +39,7 @@ namespace Kreta.Backend.Controllers.Base
             Tmodel? entity = new();
             if (_repo is not null && _assambler is not null)
             {
-                entity = await _repo.FindByCondition(entity => entity.Id == id).FirstOrDefaultAsync();
+                entity = (await _repo.FindByConditionAsync(entity => entity.Id == id)).ToList().FirstOrDefault();
                 if (entity != null)
                     return Ok(_assambler.ToDto(entity));
                 else
@@ -51,7 +51,7 @@ namespace Kreta.Backend.Controllers.Base
         [HttpPut()]
         public async Task<ActionResult> UpdateAsync(TDto entity)
         {
-            ControllerResponse response = new();
+            Response response = new();
             if (_repo is not null && _assambler is not null)
             {
                 response = await _repo.UpdateAsync(_assambler.ToModel(entity));
@@ -73,7 +73,7 @@ namespace Kreta.Backend.Controllers.Base
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAsync(Guid id)
         {
-            ControllerResponse response = new();
+            Response response = new();
             if (_repo is not null)
             {
                 response = await _repo.DeleteAsync(id);
@@ -95,7 +95,7 @@ namespace Kreta.Backend.Controllers.Base
         [HttpPost()]
         public async Task<IActionResult> InsertAsync(TDto entity)
         {
-            ControllerResponse response = new();
+            Response response = new();
             if (_repo is not null && _assambler is not null)
             {
                 response = await _repo.CreateAsync(_assambler.ToModel(entity));
