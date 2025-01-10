@@ -1,4 +1,5 @@
-﻿using Kreta.Backend.Repos;
+﻿using Kreta.Backend.Controllers.Base;
+using Kreta.Backend.Repos.Base;
 using Kreta.Shared.Assamblers;
 using Kreta.Shared.Dtos;
 using Kreta.Shared.Models;
@@ -10,7 +11,7 @@ namespace Kreta.Backend.Controllers
     [Route("api/[controller]")]
     public class SubjectTypeController : BaseController<SubjectType, SubjectTypeDto>
     {
-        public SubjectTypeController(SubjectTypeAssambler? assambler, IRepositoryBase<SubjectType>? repo) : base(assambler, repo)
+        public SubjectTypeController(SubjectTypeAssambler? assambler, IBaseRepo<SubjectType>? repo) : base(assambler, repo)
         {
         }
     }

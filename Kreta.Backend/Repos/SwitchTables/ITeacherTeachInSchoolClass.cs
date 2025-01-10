@@ -1,8 +1,9 @@
-﻿using Kreta.Shared.Models.SwitchTable;
+﻿using Kreta.Backend.Repos.Base;
+using Kreta.Shared.Models.SwitchTable;
 
 namespace Kreta.Backend.Repos.SwitchTables
 {
-    public interface ITeacherTeachInSchoolClass : IRepositoryBase<TeachersTeachInSchoolClass>
+    public interface ITeacherTeachInSchoolClass : IBaseRepo<TeachersTeachInSchoolClass>
     {
         public IQueryable<TeachersTeachInSchoolClass> SelectAllIncluded();
     }

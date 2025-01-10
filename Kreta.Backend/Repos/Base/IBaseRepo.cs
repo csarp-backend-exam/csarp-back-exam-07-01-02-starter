@@ -1,9 +1,9 @@
 ﻿using Kreta.Shared.Responses;
 using System.Linq.Expressions;
 
-namespace Kreta.Backend.Repos
+namespace Kreta.Backend.Repos.Base
 {
-    public interface IRepositoryBase<T>
+    public interface IBaseRepo<T>
     {
         IQueryable<T> GetEmpty();
         IQueryable<T> FindAll();

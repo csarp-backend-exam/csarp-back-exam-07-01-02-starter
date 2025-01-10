@@ -1,20 +1,20 @@
-﻿using Kreta.Backend.Repos;
+﻿using Kreta.Backend.Repos.Base;
 using Kreta.Shared.Assamblers;
 using Kreta.Shared.Models;
 using Kreta.Shared.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Kreta.Backend.Controllers
+namespace Kreta.Backend.Controllers.Base
 {
     public abstract class BaseController<Tmodel, TDto> : ControllerBase
         where Tmodel : class, IDbEntity<Tmodel>, new()
-        where TDto : class,new()
+        where TDto : class, new()
     {
-        protected readonly Assambler<Tmodel,TDto>? _assambler;
-        protected readonly IRepositoryBase<Tmodel>? _repo;
+        protected readonly Assambler<Tmodel, TDto>? _assambler;
+        protected readonly IBaseRepo<Tmodel>? _repo;
 
-        public BaseController(Assambler<Tmodel, TDto>? assambler, IRepositoryBase<Tmodel>? repo)
+        public BaseController(Assambler<Tmodel, TDto>? assambler, IBaseRepo<Tmodel>? repo)
         {
             _assambler = assambler;
             _repo = repo;
@@ -28,7 +28,7 @@ namespace Kreta.Backend.Controllers
             if (_repo != null && _assambler is not null)
             {
                 entities = await _repo.FindAll().ToListAsync();
-                return Ok(entities.Select(entity =>  _assambler.ToDto(entity)));
+                return Ok(entities.Select(entity => _assambler.ToDto(entity)));
             }
             return BadRequest("Az adatok elérhetetlenek!");
         }

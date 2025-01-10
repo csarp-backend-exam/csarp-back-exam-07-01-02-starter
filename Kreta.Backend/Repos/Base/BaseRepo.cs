@@ -3,16 +3,16 @@ using Kreta.Shared.Responses;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
-namespace Kreta.Backend.Repos
+namespace Kreta.Backend.Repos.Base
 {
-    public abstract class RepositoryBase<TDbContext, TEntity> : IRepositoryBase<TEntity>
+    public abstract class BaseRepo<TDbContext, TEntity> : IBaseRepo<TEntity>
         where TDbContext : DbContext
         where TEntity : class, IDbEntity<TEntity>, new()
     {
         private readonly DbContext? _dbContext;
         private readonly DbSet<TEntity>? _dbSet;
 
-        public RepositoryBase(TDbContext? dbContext)
+        public BaseRepo(TDbContext? dbContext)
         {
             _dbContext = dbContext;
             _dbSet = _dbContext?.Set<TEntity>() ?? throw new ArgumentException($"A {nameof(TEntity)} adatbázis tábla nem elérhető!");
@@ -39,7 +39,7 @@ namespace Kreta.Backend.Repos
         }
         public async Task<ControllerResponse> UpdateAsync(TEntity entity)
         {
-            ControllerResponse response = new ();
+            ControllerResponse response = new();
             try
             {
                 if (_dbContext is not null)
@@ -55,19 +55,19 @@ namespace Kreta.Backend.Repos
             {
                 response.AppendNewError(e.Message);
             }
-            response.AppendNewError($"{nameof(RepositoryBase<TDbContext, TEntity>)} osztály, {nameof(UpdateAsync)} metódusban hiba keletkezett");
+            response.AppendNewError($"{nameof(BaseRepo<TDbContext, TEntity>)} osztály, {nameof(UpdateAsync)} metódusban hiba keletkezett");
             response.AppendNewError($"{entity} frissítése nem sikerült!");
             return response;
         }
         public async Task<ControllerResponse> DeleteAsync(Guid id)
         {
-            ControllerResponse response = new ();
-            
-            TEntity? entityToDelete = FindByCondition(e => e.Id==id).FirstOrDefault();
-            
-            if (entityToDelete is null || (entityToDelete is not null && !entityToDelete.HasId))
+            ControllerResponse response = new();
+
+            TEntity? entityToDelete = FindByCondition(e => e.Id == id).FirstOrDefault();
+
+            if (entityToDelete is null || entityToDelete is not null && !entityToDelete.HasId)
             {
-                if (entityToDelete is not null )
+                if (entityToDelete is not null)
                     response.AppendNewError($"{entityToDelete.Id} idével rendelkező entitás nem található!");
                 response.AppendNewError("Az entitás törlése nem sikerült!");
             }
@@ -89,7 +89,7 @@ namespace Kreta.Backend.Repos
                     response.AppendNewError(e.Message);
                 }
             }
-            response.AppendNewError($"{nameof(RepositoryBase<TDbContext, TEntity>)} osztály, {nameof(DeleteAsync)} metódusban hiba keletkezett");
+            response.AppendNewError($"{nameof(BaseRepo<TDbContext, TEntity>)} osztály, {nameof(DeleteAsync)} metódusban hiba keletkezett");
             if (entityToDelete is not null)
                 response.AppendNewError($"Az entitás id:{entityToDelete.Id}");
             response.AppendNewError($"Az entitás törlése nem sikerült!");
@@ -97,7 +97,7 @@ namespace Kreta.Backend.Repos
         }
         public async Task<ControllerResponse> CreateAsync(TEntity entity)
         {
-            ControllerResponse response = new ();
+            ControllerResponse response = new();
             if (_dbSet is null)
             {
                 response.AppendNewError($"{entity} osztály hozzáadása az adatbázishoz nem sikerült!");
@@ -119,7 +119,7 @@ namespace Kreta.Backend.Repos
                     response.AppendNewError(e.Message);
                 }
             }
-            response.AppendNewError($"{nameof(RepositoryBase<TDbContext, TEntity>)} osztály, {nameof(CreateAsync)} metódusban hiba keletkezett");
+            response.AppendNewError($"{nameof(BaseRepo<TDbContext, TEntity>)} osztály, {nameof(CreateAsync)} metódusban hiba keletkezett");
             response.AppendNewError($"{entity} osztály hozzáadása az adatbázishoz nem sikerült!");
             return response;
         }
